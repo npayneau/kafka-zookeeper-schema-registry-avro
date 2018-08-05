@@ -9,6 +9,9 @@ services:
     environment:
       SERVICE_NAME: zookeeper
       ZOOKEEPER_CLIENT_PORT: 2181
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/zookeeper_jaas.conf -Dzookeeper.authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider"
+    volumes:
+      - "./config/zookeeper_jaas.conf:/etc/kafka/zookeeper_jaas.conf"
 
   kafka:
     image: confluentinc/cp-kafka:4.1.2
@@ -19,10 +22,23 @@ services:
       - zookeeper:zookeeper
     environment:
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
-      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://$DOCKER_IP:9092"
-      KAFKA_CREATE_TOPICS:
+      KAFKA_ADVERTISED_LISTENERS: "SASL_SSL://$DOCKER_IP:9093"
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/kafka_server_jaas.conf"
+      KAFKA_SECURITY.INTER.BROKER.PROTOCOL: SASL_SSL
+      KAFKA_SASL_ENABlED_MECHANISMS: PLAIN
+      KAFKA_SASL_MECHANISM.INTER.BROKER.PROTOCOL: PLAIN
+      KAFKA_SSL_KEYSTORE_FILENAME: kafka.server.keystore.jks
+      KAFKA_SSL_KEYSTORE_CREDENTIALS: server_keystore_creds
+      KAFKA_SSL_KEY_CREDENTIALS: server_key_creds
+      KAFKA_SSL_TRUSTSTORE_FILENAME: kafka.server.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.server.truststore.jks
+      KAFKA_SSL_TRUSTSTORE_CREDENTIALS: server_truststore_creds
+      KAFKA_SSL_CLIENT_AUTH: "required"
+     
+    volumes:
+      - "./config/kafka_server_jaas.conf:/etc/kafka/kafka_server_jaas.conf"
+      - "./certificates:/etc/kafka/secrets"
 
   schema-registry:
     image: confluentinc/cp-schema-registry:4.1.2
@@ -32,8 +48,21 @@ services:
     links:
       - zookeeper:zookeeper
     environment:
-      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: zookeeper:2181
+      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: "zookeeper:2181"
       SCHEMA_REGISTRY_HOST_NAME: schema_registry
+      #KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/schema-registry/schema_registry_jaas.conf"
+      SCHEMA_REGISTRY_KAFKASTORE_SASL_JAAS_CONFIG: "org.apache.kafka.common.security.plain.PlainLoginModule required \\ username=\"confluent\" \\ password=\"confluent-secret\";"
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: SASL_SSL://kafka:9093
+      SCHEMA_REGISTRY_KAFKASTORE_SASL_MECHANISM: PLAIN
+      SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: SASL_SSL
+      SCHEMA_REGISTRY_KAFKASTORE_SSL_TRUSTSTORE_LOCATION: /etc/schema-registry/secrets/kafka.server.truststore.jks
+      SCHEMA_REGISTRY_KAFKASTORE_SSL_TRUSTSTORE_PASSWORD: test1234
+      SCHEMA_REGISTRY_KAFKASTORE_SSL_KEYSTORE_LOCATION: /etc/schema-registry/secrets/kafka.server.keystore.jks
+      SCHEMA_REGISTRY_KAFKASTORE_SSL_KEYSTORE_PASSWORD: test1234
+      SCHEMA_REGISTRY_KAFKASTORE_SSL_KEY_PASSWORD: test1234
     depends_on:
       - zookeeper
       - kafka
+    volumes:
+      #- "./config/schema_registry_jaas.conf:/etc/schema-registry/schema_registry_jaas.conf"
+      - "./certificates:/etc/schema-registry/secrets"

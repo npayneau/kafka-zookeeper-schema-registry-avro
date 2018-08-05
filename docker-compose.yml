@@ -22,6 +22,7 @@ services:
       - zookeeper:zookeeper
     environment:
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_LISTENERS: SASL_SSL://$DOCKER_IP:9093
       KAFKA_ADVERTISED_LISTENERS: "SASL_SSL://$DOCKER_IP:9093"
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/kafka_server_jaas.conf"

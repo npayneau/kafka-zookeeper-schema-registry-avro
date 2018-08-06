@@ -41,6 +41,8 @@ sh commands.sh consume
 
 4. Producer simple avro et consomateur simple avro
 
+ATTENTION NE FONCTIONNE QUE SOUS LA BRANCHE "basic_case_without_sasl_ssl"
+
 ```
 sh commands.sh produce-avro
 sh commands.sh consume-avro

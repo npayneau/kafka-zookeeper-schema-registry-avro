@@ -18,12 +18,13 @@ services:
     hostname: kafka
     ports:
       - 9092:9092
+      - 9093:9093
     links:
       - zookeeper:zookeeper
     environment:
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
       KAFKA_LISTENERS: SASL_SSL://$DOCKER_IP:9093
-      KAFKA_ADVERTISED_LISTENERS: "SASL_SSL://$DOCKER_IP:9093"
+      KAFKA_ADVERTISED_LISTENERS: "SASL_SSL://$DOCKER_IP:9093" #Change $DOCKER_IP with HOST_IP to acces kafka outside docker
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/kafka_server_jaas.conf"
       KAFKA_SECURITY.INTER.BROKER.PROTOCOL: SASL_SSL
@@ -51,7 +52,6 @@ services:
     environment:
       SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: "zookeeper:2181"
       SCHEMA_REGISTRY_HOST_NAME: schema_registry
-      #KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/schema-registry/schema_registry_jaas.conf"
       SCHEMA_REGISTRY_KAFKASTORE_SASL_JAAS_CONFIG: "org.apache.kafka.common.security.plain.PlainLoginModule required \\ username=\"confluent\" \\ password=\"confluent-secret\";"
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: SASL_SSL://kafka:9093
       SCHEMA_REGISTRY_KAFKASTORE_SASL_MECHANISM: PLAIN
@@ -62,5 +62,4 @@ services:
       - zookeeper
       - kafka
     volumes:
-      #- "./config/schema_registry_jaas.conf:/etc/schema-registry/schema_registry_jaas.conf"
       - "./certificates:/etc/schema-registry/secrets"
